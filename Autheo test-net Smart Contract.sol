@@ -22,7 +22,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     uint256 public constant BUG_BOUNTY_ALLOCATION_PERCENTAGE = 3000; // 30%  of total supply
     uint256 public constant DAPP_REWARD_ALLOCATION_PERCENTAGE = 200; // 2%  of total supply
     uint256 public constant DEVELOPER_REWARD_ALLOCATION_PERCENTAGE = 100; // 1%  of total supply
-    uint256 private constant MAX_BPS = 10_000;
+    uint256 private constant MAX_BPS = 10000;
 
     // Fixed reward amounts
     uint256 public immutable MONTHLY_DAPP_REWARD = 5000 * SCALE;
@@ -94,7 +94,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     event ClaimAmountUpdated(uint256 newClaimedAmount);
     event EmergencyWithdraw(address token, uint256 amount);
     event TestnetStatusUpdated(bool status);
-    event DeveloperRewardDistributed(address indexed user, uint256 amount);
+    event DeveloperRewardDistributed(address indexed user, uint256 rewardPerUser);
 
     error USER_HAS_NO_CLAIM(address user);
 
@@ -120,7 +120,8 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     constructor(address _tokenAddress, address _initialAddress) Ownable(_initialAddress) {
         require(_tokenAddress != address(0), "Invalid token address");
         Autheo = IERC20(_tokenAddress);
-        totalSupply = Autheo.totalSupply();
+        // totalSupply = Autheo.totalSupply();
+        totalSupply = 21000000000000000000000000;
         isTestnet = true; // Start in testnet mode
     }
 
@@ -199,7 +200,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
             BUG_BOUNTY_ALLOCATION_PERCENTAGE) / MAX_BPS;
 
         mediumRewardPerUser =
-            ((totalBugBountyAllocation * MEDIUM_PERCENTAGE) / 100) /
+            ((totalBugBountyAllocation * MEDIUM_PERCENTAGE) / 10000) /
             _mediumBugBountyUsers.length;
 
         for (uint256 i = 0; i < _mediumBugBountyUsers.length; ) {
@@ -236,7 +237,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
             BUG_BOUNTY_ALLOCATION_PERCENTAGE) / MAX_BPS;
 
         highRewardPerUser =
-            ((totalBugBountyAllocation * HIGH_PERCENTAGE) / 100) /
+            ((totalBugBountyAllocation * HIGH_PERCENTAGE) / 10000) /
             _highBugBountyUsers.length;
 
         for (uint256 i = 0; i < _highBugBountyUsers.length; ) {
@@ -380,7 +381,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     }
 
     function __bugBountyClaim(address _user) private {
-        // Implement bug bounty claim logic
+        //Implement bug bounty claim logic
         BugCriticality userCriticality = bugBountyCriticality[_user];
         require(userCriticality != BugCriticality.NONE, "No bug bounty reward");
 
@@ -403,6 +404,8 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
             !isBugBountyUsersClaimed[_user],
             "User already claimed rewards"
         );
+
+        isBugBountyUsersClaimed[_user] = true;
 
         // Track claim
         totalBugBountyRewardsClaimed += rewardAmount;
@@ -447,11 +450,16 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
      * @dev Distribute developer rewards to whitelisted contract deployers
      */
     function distributeDeveloperRewards() internal {
+        
+        // emit e_developmentUserNumber(whitelistedContractDeploymentUsers.length);
+        
         uint256 developerRewardTotal = (totalSupply *
             DEVELOPER_REWARD_ALLOCATION_PERCENTAGE) / MAX_BPS;
+        // emit e_developerRewardTotal(developerRewardTotal);
+        uint256 rewardPerUser = developerRewardTotal / whitelistedContractDeploymentUsers.length;
 
-        uint256 rewardPerUser = developerRewardTotal /
-            whitelistedContractDeploymentUsers.length;
+        // emit e_rewardPerUser(rewardPerUser);
+        // emit e_contractAutheoBalance(Autheo.balanceOf(address(this)));
 
         for (
             uint256 i = 0;
@@ -463,7 +471,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
 
             // Transfer developer rewards to the user
             Autheo.safeTransfer(user, rewardPerUser);
-            emit DeveloperRewardDistributed(user, rewardPerUser);
+            emit Claimed("Initial Developer Distribution", user, block.timestamp);
         }
     }
 
