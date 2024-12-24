@@ -133,8 +133,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
      constructor(address _tokenAddress) Ownable(msg.sender) {
         require(_tokenAddress != address(0), "Invalid token address");
         Autheo = IERC20(_tokenAddress);
-        // totalSupply = Autheo.totalSupply();
-        totalSupply = 21000000000000000000000000;
+        totalSupply = Autheo.totalSupply();
         isTestnet = true; // Start in testnet mode
     }
 
@@ -423,6 +422,12 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
 
         totalBugBountyRewardsClaimed += totalRewardAmount;
 
+        //check total BugBounty User Rewards exceed to the 30 % of total supply
+        require (
+            totalBugBountyRewardsClaimed <= (totalSupply * BUG_BOUNTY_ALLOCATION_PERCENTAGE) / MAX_BPS,
+            "exceed total reward amount allocated to Bug Bounty users"
+        );
+
         Autheo.safeTransfer(_user, totalRewardAmount);
 
         emit Claimed("Bug Bounty", _user, totalRewardAmount);
@@ -457,6 +462,12 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
 
         // Track total claimed amount
         totalContractDeploymentClaimed += totalReward;
+
+        //check total Contract Deployment User Rewards exceed to the 1 % of total supply
+        require (
+            totalContractDeploymentClaimed <= (totalSupply * DEVELOPER_REWARD_ALLOCATION_PERCENTAGE) / MAX_BPS,
+            "exceed total reward amount allocated to Contract Deployment users"
+        );
 
         // Transfer the accumulated reward
         Autheo.safeTransfer(_user, totalReward);
@@ -503,6 +514,12 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
         // Mark the user as having claimed their rewards
         isDappUsersClaimed[_user] = true;
         totalDappRewardsClaimed += rewardAmount;
+
+        //check total Dapp User Rewards exceed to the 2 % of total supply
+        require (
+            totalDappRewardsClaimed <= (totalSupply * DAPP_REWARD_ALLOCATION_PERCENTAGE) / MAX_BPS,
+            "exceed total reward amount allocated to Dapp users"
+        );
 
         // Transfer the calculated reward to the user
         Autheo.safeTransfer(_user, rewardAmount);
