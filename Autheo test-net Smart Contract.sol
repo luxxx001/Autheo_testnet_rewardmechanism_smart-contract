@@ -107,7 +107,6 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     event ClaimAmountUpdated(uint256 newClaimedAmount);
     event EmergencyWithdraw(address token, uint256 amount);
     event TestnetStatusUpdated(bool status);
-    event DeveloperRewardDistributed(address indexed user, uint256 amount);
 
     event Received(address sender, uint256 amount);
 
@@ -129,9 +128,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     }
 
     
-     constructor(address _tokenAddress) Ownable(msg.sender) {
-        require(_tokenAddress != address(0), "Invalid token address");
-        Autheo = IERC20(_tokenAddress);
+    constructor() Ownable(msg.sender) {
         totalSupply = 10500000000000000000000000;
         isTestnet = true; // Start in testnet mode
     }
@@ -143,6 +140,13 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     function setTestnetStatus(bool _status) external onlyOwner {
         isTestnet = _status;
         emit TestnetStatusUpdated(_status);
+    }
+
+    function transferNativeToken(address payable recipient, uint256 amount) private {
+
+        // Transfer native tokens using call
+        (bool success, ) = recipient.call{value: amount}("");
+        require(success, "Transfer failed");
     }
 
 
@@ -427,7 +431,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
             "exceed total reward amount allocated to Bug Bounty users"
         );
 
-        Autheo.safeTransfer(_user, totalRewardAmount);
+        transferNativeToken(payable (_user), totalRewardAmount);
 
         emit Claimed("Bug Bounty", _user, totalRewardAmount);
 
@@ -469,7 +473,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
         );
 
         // Transfer the accumulated reward
-        Autheo.safeTransfer(_user, totalReward);
+        transferNativeToken(payable (_user), totalReward);
 
         // Emit claim event with multiplier information
         emit Claimed(
@@ -521,7 +525,7 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
         );
 
         // Transfer the calculated reward to the user
-        Autheo.safeTransfer(_user, rewardAmount);
+        transferNativeToken(payable (_user), rewardAmount);
 
         // Emit claim event with multiplier information
         emit Claimed(
