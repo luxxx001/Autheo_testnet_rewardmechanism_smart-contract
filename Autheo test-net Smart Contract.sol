@@ -21,9 +21,9 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     uint256 private immutable SCALE = 10 ** 18;
 
     // Allocation percentages (scaled by DECIMALS)
-    uint256 public constant BUG_BOUNTY_ALLOCATION_PERCENTAGE = 3000; // 30%  of total supply
-    uint256 public constant DAPP_REWARD_ALLOCATION_PERCENTAGE = 200; // 2%  of total supply
-    uint256 public constant DEVELOPER_REWARD_ALLOCATION_PERCENTAGE = 100; // 1%  of total supply
+    uint256 public constant BUG_BOUNTY_ALLOCATION_PERCENTAGE = 6000; // 60%  of total supply
+    uint256 public constant DAPP_REWARD_ALLOCATION_PERCENTAGE = 400; // 4%  of total supply
+    uint256 public constant DEVELOPER_REWARD_ALLOCATION_PERCENTAGE = 200; // 2%  of total supply
     uint256 private constant MAX_BPS = 10000;
 
     // Fixed reward amounts
@@ -109,6 +109,8 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
     event TestnetStatusUpdated(bool status);
     event DeveloperRewardDistributed(address indexed user, uint256 amount);
 
+    event Received(address sender, uint256 amount);
+
 
     error USER_HAS_NO_CLAIM(address user);
 
@@ -126,14 +128,11 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
         _;
     }
 
-    /**
-     * @dev Constructor
-     * @param _tokenAddress Address of the ERC20 token contract
-     */
+    
      constructor(address _tokenAddress) Ownable(msg.sender) {
         require(_tokenAddress != address(0), "Invalid token address");
         Autheo = IERC20(_tokenAddress);
-        totalSupply = Autheo.totalSupply();
+        totalSupply = 10500000000000000000000000;
         isTestnet = true; // Start in testnet mode
     }
 
@@ -556,6 +555,26 @@ contract AutheoRewardDistribution is Ownable, ReentrancyGuard, Pausable {
         returns (address[] memory)
     {
         return whitelistedContractDeploymentUsers;
+    }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {
+    emit Received(msg.sender, msg.value);
+    }
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {
+    emit Received(msg.sender, msg.value);
+    }
+
+    // Function to withdraw Ether from this contract
+    function withdraw() external {
+    payable(msg.sender).transfer(address(this).balance);
+    }
+
+    // Function to get the balance of this contract
+    function getBalance() external view returns (uint256) {
+    return address(this).balance;
     }
 
     /**
